@@ -62,7 +62,7 @@ int main()
 			//break;
 		}
 
-		printf_s("WSASendTo\n");
+		printf_s("WSASendTo: pid:%d, count:%d\n", pid, count);
 
 		Sleep(1000 * 2);
 		count++;

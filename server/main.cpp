@@ -96,10 +96,36 @@ int main()
 			DWORD err234 = GetLastError();
 			if (err234 == ERROR_MORE_DATA)
 			{
-				printf_s("Good to go\n");
+				printf_s("ERROR_MORE_DATA\n");
 
 				//6. obtain client socket addr
-				//WSARecvFrom()
+				DWORD recvBytes = 0;
+				DWORD cli_flags = MSG_PEEK;
+				char pBuffer[RECV_BUFFER_SIZE] = {};
+				WSABUF cli_buffer;
+				cli_buffer.buf = pBuffer;
+				cli_buffer.len = RECV_BUFFER_SIZE;
+				sockaddr_in client_addr;
+				int addr_size = sizeof(client_addr);
+				int res3 = WSARecvFrom(hSockListening, &cli_buffer, 1, &recvBytes, &cli_flags, (struct sockaddr*)&client_addr, &addr_size, NULL, NULL);
+
+				if (res3 != 0)
+				{
+					int err997 = GetLastError();
+					
+				}
+				else
+				{
+					//7. 클라이언트 주소를 얻은 다음
+					//클라이언트와 세션을 (소켓) 만들어서 거기다 대고 send/recv 해야 할것 같은데?
+					int pid = 0;
+					memcpy(&pid, cli_buffer.buf, sizeof(int));
+					int count = 0;
+					memcpy(&count, cli_buffer.buf + sizeof(int), sizeof(int));
+					printf_s("%d, %d from client port: %d\n", pid, count, ntohs(client_addr.sin_port));
+					
+				}
+				
 			}
 			else
 			{
@@ -108,7 +134,11 @@ int main()
 		}
 		
 		ret2 = WSARecv(hSockListening, &zero_byte_read_buffer, 1, &recvBytes, &zero_byte_read_flags, &session->overlpped, NULL);
-
+		if (ret2 == SOCKET_ERROR)
+		{
+			//printf_s("WSARecv Error: %d\n", GetLastError());
+			//WSA_IO_PENDING = 997
+		}
 		Sleep(1000 * 2);
 	}
 
