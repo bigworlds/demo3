@@ -5,7 +5,10 @@
 #include <WS2tcpip.h>
 #include <iostream>
 #include <process.h>
+#include <thread>
 #pragma comment(lib, "ws2_32.lib")
+//#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
+
 using namespace std;
 
 const char* pIPAddress = "127.0.0.1";
@@ -29,6 +32,11 @@ int main()
 		exit(0);
 	}
 
+	//BOOL bNewBehavior = FALSE;
+	//DWORD dwBytesReturned = 0;
+	//WSAIoctl(hSock, SIO_UDP_CONNRESET, &bNewBehavior, sizeof bNewBehavior, NULL, 0, &dwBytesReturned, NULL, NULL);
+	
+
 	sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(PORT);
@@ -44,8 +52,10 @@ int main()
 	DWORD bytesSent = 0;
 	DWORD flags = 0;
 	int count = 0;
+
 	while(1)
 	{
+#if 1
 		memcpy(pBuffer + sizeof(int), &count, sizeof(int));
 		if (SOCKET_ERROR == ::WSASendTo(
 			hSock,
@@ -64,8 +74,10 @@ int main()
 
 		printf_s("WSASendTo: pid:%d, count:%d\n", pid, count);
 
-		Sleep(1000 * 2);
+		Sleep(500); //0.5sec
 		count++;
+#endif
+
 	}
 
 	//뒤처리
