@@ -37,10 +37,10 @@ int main()
 	//WSAIoctl(hSock, SIO_UDP_CONNRESET, &bNewBehavior, sizeof bNewBehavior, NULL, 0, &dwBytesReturned, NULL, NULL);
 	
 
-	sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(PORT);
-	addr.sin_addr.s_addr = inet_addr(pIPAddress);
+	sockaddr_in svraddr;
+	svraddr.sin_family = AF_INET;
+	svraddr.sin_port = htons(PORT);
+	svraddr.sin_addr.s_addr = inet_addr(pIPAddress);
 
 	int pid = _getpid();
 	char pBuffer[SEND_BUFFER_SIZE] = {};
@@ -51,11 +51,27 @@ int main()
 
 	DWORD bytesSent = 0;
 	DWORD flags = 0;
-	int count = 0;
+	int count = 1;
+
+	//for connect
+	memcpy(pBuffer + sizeof(int), &count, sizeof(int));
+	if (SOCKET_ERROR == ::WSASendTo(
+		hSock,
+		&buf,
+		1,
+		&bytesSent,
+		flags,
+		reinterpret_cast<sockaddr*>(&svraddr),
+		sizeof(svraddr),
+		0,
+		0))
+	{
+		printf_s("WSASendTo Error: %d\n", GetLastError());
+		//break;
+	}
 
 	while(1)
 	{
-#if 1
 		memcpy(pBuffer + sizeof(int), &count, sizeof(int));
 		if (SOCKET_ERROR == ::WSASendTo(
 			hSock,
@@ -63,8 +79,8 @@ int main()
 			1,
 			&bytesSent,
 			flags,
-			reinterpret_cast<sockaddr*>(&addr),
-			sizeof(addr),
+			reinterpret_cast<sockaddr*>(&svraddr),
+			sizeof(svraddr),
 			0,
 			0))
 		{
@@ -74,9 +90,23 @@ int main()
 
 		printf_s("WSASendTo: pid:%d, count:%d\n", pid, count);
 
+
+		DWORD recvBytes = 0;
+		DWORD cli_peek_flags = 0;// MSG_PEEK;
+		char pBufferRecv[RECV_BUFFER_SIZE] = {};
+		WSABUF cli_buffer;
+		cli_buffer.buf = pBufferRecv;
+		cli_buffer.len = RECV_BUFFER_SIZE;
+		int addr_size = sizeof(svraddr);
+		int res3 = WSARecvFrom(hSock, &cli_buffer, 1, &recvBytes, &cli_peek_flags, (struct sockaddr*)&svraddr, &addr_size, NULL, NULL);
+		int pid2 = 0;
+		memcpy(&pid2, &pBufferRecv[0], 4);
+		int count2 = 0;
+		memcpy(&count2, &pBufferRecv[4], 4);
+		printf_s("WSARecvFrom: %d, %d\n", pid2, count2);
+
 		Sleep(500); //0.5sec
 		count++;
-#endif
 
 	}
 

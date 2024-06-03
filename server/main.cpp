@@ -109,9 +109,10 @@ int main()
 				printf_s("GQCS Error: %d\n", err234);
 			}
 		}
+		
 		//6. obtain client socket addr
 		DWORD recvBytes = 0;
-		DWORD cli_peek_flags = MSG_PEEK;
+		DWORD cli_peek_flags = MSG_PEEK; //확인만 하고 pop안함 클라이언트 코드에서 켜보면 뭔소린지 알거임
 		char pBuffer[RECV_BUFFER_SIZE] = {};
 		WSABUF cli_buffer;
 		cli_buffer.buf = pBuffer;
@@ -120,7 +121,7 @@ int main()
 		int addr_size = sizeof(client_addr);
 		int res3 = WSARecvFrom(hSockListening, &cli_buffer, 1, &recvBytes, &cli_peek_flags, (struct sockaddr*)&client_addr, &addr_size, NULL, NULL);
 
-		if (res3 != 0)
+		if (res3 != ERROR_SUCCESS)
 		{
 			int err997 = GetLastError();
 			if (err997 != WSA_IO_PENDING)
@@ -128,7 +129,7 @@ int main()
 				printf_s("WSARecvFrom Error: %d\n", err997);
 			}
 		}
-				
+		
 		//7. 클라이언트 주소를 얻은 다음
 		//클라이언트와 세션을 (소켓) 만들어서 거기다 대고 send/recv 해야 할것 같은데?
 		//결국 accept하는게 아닌가
@@ -201,9 +202,9 @@ int main()
 			send_buffer.len = SEND_BUFFER_SIZE;
 			memcpy(session.pBuffer, cli_buffer.buf, SEND_BUFFER_SIZE);
 
-			int res4 = WSASendTo(session.hSockClient, &cli_buffer, 1, &sendBytes, 0, (struct sockaddr*)&session.addr, sizeof(session.addr), &session.overlpped, NULL);
+			int res4 = WSASend(session.hSockClient, &cli_buffer, 1, &sendBytes, 0, &session.overlpped, NULL);
 
-			if (res4 != 0)
+			if (res4 != ERROR_SUCCESS)
 			{
 				int err997 = GetLastError();
 
@@ -214,10 +215,11 @@ int main()
 			}
 		}
 		
+		//Prime
 		ret2 = WSARecv(hSockListening, &zero_byte_read_buffer, 1, &recvBytes, &zero_byte_read_flags, &sessionListening->overlpped, NULL);
 		if (ret2 == SOCKET_ERROR)
 		{
-			//printf_s("Prime-WSARecv Error: %d\n", GetLastError());
+			//printf_s("WSARecv Error: %d\n", GetLastError());
 			//WSA_IO_PENDING = 997
 		}
 		//Sleep(1000 * 2);
